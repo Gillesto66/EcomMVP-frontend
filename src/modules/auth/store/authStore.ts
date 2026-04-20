@@ -10,7 +10,7 @@ const ssrSafeStorage = createJSONStorage(() =>
     getItem: () => null,
     setItem: () => {},
     removeItem: () => {},
-  } as Storage)
+  } as unknown as Storage)
 )
 
 interface AuthState {

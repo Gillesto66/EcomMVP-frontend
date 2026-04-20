@@ -13,7 +13,7 @@ const ssrSafeStorage = createJSONStorage(() =>
     getItem: () => null,
     setItem: () => {},
     removeItem: () => {},
-  } as Storage)
+  } as unknown as Storage)
 )
 
 // Lazy import de js-cookie pour éviter l'accès à document au niveau module (SSR)
