@@ -5,7 +5,11 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
 export const apiClient = axios.create({
   baseURL: `${BASE_URL}/api/v1`,
-  headers: { 'Content-Type': 'application/json' },
+  headers: {
+    'Content-Type': 'application/json',
+    // Bypass la page d'interstitiel Ngrok en production
+    'ngrok-skip-browser-warning': 'true',
+  },
   timeout: 10000,
 })
 

@@ -5,6 +5,14 @@ const nextConfig = {
   // Vercel gère lui-même le packaging — laisser commenté pour compatibilité universelle
   // output: 'standalone',
 
+  // ── Redirects ───────────────────────────────────────────────────────────────
+  async redirects() {
+    return [
+      // Ngrok affiche une page d'interstitiel sur les requêtes browser — bypass via header
+      // (géré côté axios dans api.ts, pas ici)
+    ]
+  },
+
   // ── Rewrites API ────────────────────────────────────────────────────────────
   // Proxy vers le backend uniquement en développement local.
   // En production (Vercel), le frontend appelle directement NEXT_PUBLIC_API_URL
@@ -22,6 +30,7 @@ const nextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'http',  hostname: 'localhost',          port: '8000', pathname: '/media/**' },
+      { protocol: 'https', hostname: 'pomological-unlucidly-su.ngrok-free.dev', pathname: '/media/**' },
       { protocol: 'https', hostname: '**.ngrok-free.app',               pathname: '/media/**' },
       { protocol: 'https', hostname: '**.ngrok-free.dev',               pathname: '/media/**' },
     ],
