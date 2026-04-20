@@ -1,8 +1,17 @@
 // Auteur : Gilles - Projet : AGC Space - Module : Cart - Store Zustand
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import type { CartItem, Product, Order } from '@/src/types'
 import apiClient from '@/src/lib/api'
+
+// SSR-safe storage : évalué à l'exécution (pas au module-level)
+const ssrSafeStorage = createJSONStorage(() =>
+  typeof window !== 'undefined' ? localStorage : ({
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+  } as Storage)
+)
 
 const LOG_PREFIX = '[AGC Cart]'
 
@@ -220,11 +229,8 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: 'agc-cart',
+      storage: ssrSafeStorage,
       partialize: (state) => ({ items: state.items }),
-      // SSR-safe : ne pas accéder à localStorage côté serveur
-      storage: typeof window !== 'undefined'
-        ? undefined  // utilise localStorage par défaut côté client
-        : { getItem: () => null, setItem: () => {}, removeItem: () => {} },
     }
   )
 )

@@ -1,14 +1,20 @@
 // Auteur : Gilles - Projet : AGC Space - Module : Configuration Next.js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  // 'standalone' est utile pour Docker/self-hosted, mais inutile sur Vercel
+  // Vercel gère lui-même le packaging — laisser commenté pour compatibilité universelle
+  // output: 'standalone',
 
   // ── Rewrites API ────────────────────────────────────────────────────────────
+  // Proxy vers le backend uniquement en développement local.
+  // En production (Vercel), le frontend appelle directement NEXT_PUBLIC_API_URL
+  // via apiClient (axios), donc ce rewrite n'est pas utilisé en prod.
   async rewrites() {
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
     return [
       {
         source: '/api/v1/:path*',
-        destination: 'http://localhost:8000/api/v1/:path*',
+        destination: `${backendUrl}/api/v1/:path*`,
       },
     ]
   },

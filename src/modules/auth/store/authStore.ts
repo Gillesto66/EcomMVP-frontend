@@ -1,8 +1,17 @@
 // Auteur : Gilles - Projet : AGC Space - Module : Auth - Store Zustand
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import type { User, UserRole } from '@/src/types'
 import { authService } from '../service/authService'
+
+// SSR-safe storage : évalué à l'exécution (pas au module-level)
+const ssrSafeStorage = createJSONStorage(() =>
+  typeof window !== 'undefined' ? localStorage : ({
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+  } as Storage)
+)
 
 interface AuthState {
   user: User | null
@@ -73,10 +82,8 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'agc-auth',
+      storage: ssrSafeStorage,
       partialize: (state) => ({ user: state.user }),
-      storage: typeof window !== 'undefined'
-        ? undefined
-        : { getItem: () => null, setItem: () => {}, removeItem: () => {} },
     }
   )
 )

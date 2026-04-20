@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import type { Block } from '@/src/types'
 import { builderLogger } from '@/src/modules/builder/logger'
 import RichTextEditor from './RichTextEditor'
+import apiClient from '@/src/lib/api'
 
 interface PropertiesPanelProps {
   block: Block | null
@@ -34,38 +35,13 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ block, blockIndex, on
       const formData = new FormData()
       formData.append('file', file)
 
-      const response = await fetch('/api/products/upload/', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      })
+      // Utilise apiClient (axios) pour bénéficier de l'intercepteur JWT + refresh auto
+      const { data: result } = await apiClient.post<{ url: string }>(
+        '/products/upload/',
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      )
 
-      // Vérifier le type de contenu avant de parser en JSON
-      const contentType = response.headers.get('content-type')
-      const isJson = contentType?.includes('application/json')
-
-      if (!response.ok) {
-        let errorMessage = 'Erreur lors de l\'upload'
-        if (isJson) {
-          try {
-            const error = await response.json()
-            errorMessage = error.error || errorMessage
-          } catch {
-            errorMessage = `Erreur serveur (${response.status})`
-          }
-        } else {
-          errorMessage = `Réponse serveur invalide (${response.status})`
-        }
-        throw new Error(errorMessage)
-      }
-
-      if (!isJson) {
-        throw new Error('La réponse serveur n\'est pas en JSON')
-      }
-
-      const result = await response.json()
       if (!result.url) {
         throw new Error('Pas de URL retournée par le serveur')
       }

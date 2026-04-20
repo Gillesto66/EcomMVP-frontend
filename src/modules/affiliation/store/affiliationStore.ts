@@ -1,11 +1,20 @@
 // Auteur : Gilles - Projet : AGC Space - Module : Affiliation - Store Zustand
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import apiClient from '@/src/lib/api'
 import type { AffiliationValidation } from '@/src/types'
 
 const COOKIE_NAME = 'agc_ref'
 const COOKIE_DAYS = Number(process.env.NEXT_PUBLIC_AFFILIATION_COOKIE_DAYS ?? 30)
+
+// SSR-safe storage : évalué à l'exécution (pas au module-level)
+const ssrSafeStorage = createJSONStorage(() =>
+  typeof window !== 'undefined' ? localStorage : ({
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+  } as Storage)
+)
 
 // Lazy import de js-cookie pour éviter l'accès à document au niveau module (SSR)
 const getCookies = async () => {
@@ -72,6 +81,7 @@ export const useAffiliationStore = create<AffiliationState>()(
     }),
     {
       name: 'agc-affiliation',
+      storage: ssrSafeStorage,
       partialize: (state) => ({ trackingCode: state.trackingCode }),
     }
   )
