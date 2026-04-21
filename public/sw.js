@@ -1,10 +1,7 @@
 // Auteur : Gilles - Projet : AGC Space - Module : PWA - Service Worker
-// Stratégie : Cache First pour les assets statiques, Network First pour l'API
-
-const CACHE_NAME = 'agcspace-v1'
+const CACHE_NAME = 'agcspace-v2'
 const STATIC_ASSETS = ['/', '/login', '/register']
 
-// Installation — mise en cache des pages shell
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
@@ -12,7 +9,6 @@ self.addEventListener('install', (event) => {
   self.skipWaiting()
 })
 
-// Activation — nettoyage des anciens caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -22,27 +18,33 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
-// Fetch — stratégie hybride
 self.addEventListener('fetch', (event) => {
   const { request } = event
   const url = new URL(request.url)
 
-  // API Django → Network First (données toujours fraîches)
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      fetch(request).catch(() => caches.match(request))
-    )
-    return
+  // Ne pas intercepter les requêtes non-GET, chrome-extension, etc.
+  if (request.method !== 'GET') return
+  if (!url.protocol.startsWith('http')) return
+
+  // API Django → Network Only (jamais de cache pour les données)
+  if (url.pathname.startsWith('/api/') || url.hostname.includes('ngrok')) {
+    return // laisser le browser gérer directement
   }
 
-  // Assets statiques → Cache First
-  if (request.destination === 'image' || request.destination === 'font') {
+  // Assets statiques Next.js → Cache First
+  if (
+    request.destination === 'image' ||
+    request.destination === 'font' ||
+    url.pathname.startsWith('/_next/static/')
+  ) {
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached
         return fetch(request).then((response) => {
-          const clone = response.clone()
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
+          if (response.ok) {
+            const clone = response.clone()
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
+          }
           return response
         })
       })
@@ -50,7 +52,7 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Pages → Network First avec fallback cache
+  // Pages HTML → Network First, fallback cache, fallback réseau sans cache
   event.respondWith(
     fetch(request)
       .then((response) => {
@@ -60,6 +62,8 @@ self.addEventListener('fetch', (event) => {
         }
         return response
       })
-      .catch(() => caches.match(request))
+      .catch(() =>
+        caches.match(request).then((cached) => cached || fetch(request))
+      )
   )
 })

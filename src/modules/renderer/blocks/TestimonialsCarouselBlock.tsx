@@ -15,16 +15,26 @@ interface Props { block: Block }
 const TestimonialsCarouselBlock = memo(function TestimonialsCarouselBlock({ block }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0)
 
-  // Parse testimonials: "author|role|text" format
-  const testimonials: Testimonial[] = (block.items as string[])?.map(item => {
-    const parts = item.split('|')
-    return {
-      author: parts[0]?.trim() || 'Auteur inconnu',
-      role: parts[1]?.trim() || '',
-      text: parts[2]?.trim() || '',
-      avatar: parts[3]?.trim() || '',
+  // Parse testimonials: supporte le format objet {author, role, text} ET le format string "author|role|text"
+  const testimonials: Testimonial[] = ((block.items as unknown[]) ?? []).map(item => {
+    if (typeof item === 'string') {
+      const parts = item.split('|')
+      return {
+        author: parts[0]?.trim() || 'Auteur inconnu',
+        role: parts[1]?.trim() || '',
+        text: parts[2]?.trim() || '',
+        avatar: parts[3]?.trim() || '',
+      }
     }
-  }) || []
+    // Format objet
+    const obj = item as Record<string, unknown>
+    return {
+      author: String(obj.author ?? 'Auteur inconnu'),
+      role: String(obj.role ?? ''),
+      text: String(obj.text ?? ''),
+      avatar: String(obj.avatar ?? ''),
+    }
+  })
 
   const goNext = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % testimonials.length)

@@ -21,10 +21,18 @@ const FAQAccordionBlock = memo(function FAQAccordionBlock({ block }: Props) {
     )
   }
 
-  // Parse items: "question? réponse" format
+  // Parse items: supporte le format objet {question, answer} ET le format string "question? réponse"
   const faqs = items.map(item => {
-    const [question, answer] = item.split('?').map(s => s.trim())
-    return { question: question + '?', answer: answer || '' }
+    if (typeof item === 'string') {
+      const [question, answer] = item.split('?').map(s => s.trim())
+      return { question: question + '?', answer: answer || '' }
+    }
+    // Format objet
+    const obj = item as Record<string, unknown>
+    return {
+      question: String(obj.question ?? ''),
+      answer: String(obj.answer ?? ''),
+    }
   })
 
   return (

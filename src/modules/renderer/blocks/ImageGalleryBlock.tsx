@@ -8,7 +8,12 @@ interface Props { block: Block }
 
 const ImageGalleryBlock = memo(function ImageGalleryBlock({ block }: Props) {
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const images = (block.items as string[]) || []
+  // Supporte le format objet {url, alt} ET le format string "url"
+  const images: string[] = ((block.items as unknown[]) || []).map(item => {
+    if (typeof item === 'string') return item
+    const obj = item as Record<string, unknown>
+    return String(obj.url ?? obj.src ?? '')
+  }).filter(Boolean)
 
   if (!images || images.length === 0) {
     return (
