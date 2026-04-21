@@ -4,7 +4,7 @@ import type { Product, PageTemplate, RenderPayload, Theme } from '@/src/types'
 
 export const productService = {
   async list(): Promise<Product[]> {
-    const { data } = await apiClient.get<{ results?: Product[] } | Product[]>('/products/')
+    const { data } = await apiClient.get<{ results?: Product[] } | Product[]>('/products/?mine=true')
     if (Array.isArray(data)) return data
     return (data as { results?: Product[] }).results ?? []
   },
